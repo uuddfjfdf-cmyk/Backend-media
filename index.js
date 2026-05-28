@@ -11,6 +11,10 @@ app.use(express.json({ limit: "10mb" }));
 // in-memory storage
 let avatarData = null;
 let siteData = null;
+let analytics = {
+  visits: 0,
+  clicks: {} // { "linkId:title": count }
+};
 
 // health check (wajib buat deploy debug)
 app.get("/", (req, res) => {
@@ -61,6 +65,32 @@ app.post("/api/data", (req, res) => {
   }
   siteData = { name, bio, social, product };
   res.json({ message: "Data berhasil disimpan ✓" });
+});
+
+// POST track visit - catat pengunjung baru
+app.post("/api/track/visit", (req, res) => {
+  analytics.visits += 1;
+  res.json({ visits: analytics.visits });
+});
+
+// POST track click - catat klik link
+app.post("/api/track/click", (req, res) => {
+  const { linkId, title } = req.body;
+  if (!linkId) return res.status(400).json({ message: "linkId wajib" });
+  const key = `${linkId}:${title || linkId}`;
+  analytics.clicks[key] = (analytics.clicks[key] || 0) + 1;
+  res.json({ ok: true });
+});
+
+// GET analytics - ambil semua statistik
+app.get("/api/analytics", (req, res) => {
+  res.json(analytics);
+});
+
+// POST analytics/reset - reset semua data analitik
+app.post("/api/analytics/reset", (req, res) => {
+  analytics = { visits: 0, clicks: {} };
+  res.json({ message: "Analitik berhasil direset ✓" });
 });
 
 // port railway wajib pakai process.env.PORT
