@@ -8,8 +8,9 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-// in-memory avatar storage
+// in-memory storage
 let avatarData = null;
+let siteData = null;
 
 // health check (wajib buat deploy debug)
 app.get("/", (req, res) => {
@@ -42,6 +43,24 @@ app.post("/api/avatar", (req, res) => {
   }
   avatarData = avatar;
   res.json({ message: "Avatar berhasil disimpan ✓" });
+});
+
+// GET data - ambil semua data (nama, bio, links)
+app.get("/api/data", (req, res) => {
+  if (!siteData) {
+    return res.status(404).json({ message: "Data belum diset" });
+  }
+  res.json(siteData);
+});
+
+// POST data - simpan semua data
+app.post("/api/data", (req, res) => {
+  const { name, bio, social, product } = req.body;
+  if (!name && !bio && !social && !product) {
+    return res.status(400).json({ message: "Data tidak valid" });
+  }
+  siteData = { name, bio, social, product };
+  res.json({ message: "Data berhasil disimpan ✓" });
 });
 
 // port railway wajib pakai process.env.PORT
